@@ -1,13 +1,8 @@
-﻿# hack30_2021
-
-Hack30 Project Submission Report 
 
 Final Product : WeCode App (A platform where you can video call, code and draw together)
 
 Hosted at https://wecoder.ml/
 
-# Screenshot
-![Example Image](https://github.com/Signior-X/hack30_2021/blob/main/screenshot.png)
 
 # Features : 
 
