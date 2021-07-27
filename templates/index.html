@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+  <title>Whackers!</title>
+
+  <!-- Bootstrap CSS CDN -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css"
+    integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous">
+
+  <!-- Our Custom CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css')}}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='code.css')}}">
+
+  <!-- Font Awesome JS -->
+  <script defer src="https://use.fontawesome.com/releases/v5.0.13/js/solid.js"
+    integrity="sha384-tzzSw1/Vo+0N5UhStP3bvwWPq+uvzCMfrN1fEFe+xBmv1C/AtVX5K0uZtmcHitFZ"
+    crossorigin="anonymous"></script>
+  <script defer src="https://use.fontawesome.com/releases/v5.0.13/js/fontawesome.js"
+    integrity="sha384-6OIrr52G08NpOFSZdxxz1xdNSndlD4vdcf/q2myIUVO0VsqaGHJsB0RaBE01VTOY"
+    crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+    integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.11/handlebars.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+    integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+    crossorigin="anonymous"></script>
+  <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
+  <script src="{{ url_for('static', filename='draw.js') }}"></script>
+  <script src="{{ url_for('static', filename='index.js') }}"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.3.3/ace.js" type="text/javascript" charset="utf-8"></script>
+
+
+
+</head>
+
+<body>
+
+  <div class="wrapper">
+    <!-- Left Sidebar  -->
+    <nav id="sidebar">
+      <div id="dismiss">
+        <i class="fas fa-arrow-left"></i>
+      </div>
+
+      <div class="sidebar-header">
+        <h3></h3>
+      </div>
+
+      <ul class="list-unstyled components">
+        <li>
+          <label for="color-picker">Brush Colour:</label>
+          <select class="form-control" id="color-picker">
+            <option value="black" style="background-color: Black;color: #FFFFFF;">Black</option>
+            <option value="red">Red</option>
+            <option value="blue">Blue</option>
+            <option value="green">Green</option>
+            <option value="white">White</option>
+          </select>
+
+        </li>
+        <li>
+          <label for="thickness_slider">Brush Thickness</label>
+          <input id="thickness_slider" data-slider-id='ex1Slider' type="text" data-slider-min="0" data-slider-max="20"
+            data-slider-step="1" data-slider-value="14" />
+        </li>
+        <li>
+          <button type="button" id="erase" class="btn btn-default" style="margin-top:5px;width:100%;">Clear
+            Canvas</button>
+        </li>
+      </ul>
+
+    </nav>
+
+    <!-- Right Sidebar  -->
+    <div id="chatRoom" class="chatRoom">
+      <a href="javascript:void(0)" class="closebtn" onclick="closeChat()">&times;</a>
+      <ul id="msg-list"></ul> <!-- This is where the messages go  -->
+      <form id="msg-form" class="mt-3 mb-3" style="margin: 0 4px;">
+        <div class="input-group">
+          <input type="text" id="msg-text" class="form-control input-style" autocomplete="off"
+            placeholder="Enter a message..." autofocus style="margin-right:5px; margin-left:4px;">
+          <div class="input-group-append">
+            <button id="msg-send" type="submit" class="btn btn-primary">Send</button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Page Content  -->
+
+    <div id="content" class="container-fluid">
+
+      <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div id="top_bar" class="container-fluid">
+          <div id="lhs_topbar" style="float:left;">
+            <button type="button" id="sidebarCollapse" class="btn btn-info">
+              <i class="fas fa-palette"></i>
+            </button>
+
+            <button type="button" id="undo" class="btn btn-light" style="margin-left:5px;">
+              <i class="fas fa-undo"></i>
+            </button>
+
+            <button type="button" id="redo" class="btn btn-light" style="margin-left:5px;">
+              <i class="fas fa-redo"></i>
+            </button>
+          </div>
+          <div class="row" style="width: 500px;">
+            <h4 class="col-sm-6" id="navbar_header"></h4>
+            <p class="col-sm-6" id="count" style="margin: 0;">Disconnected.</p>
+          </div>
+
+          <div id="rhs_topbar" style="float:right; margin-right:10px;">
+            <button id="share_screen" class="btn btn-primary" disabled>Share screen</button>
+            <button id="active_users_list_button" type="button" class="btn btn-dark">
+              Active Users
+            </button>
+            <div id="active_users_list">
+            </div>
+            <button type="button" class="btn btn-info" onclick="openChat()">Open Chat</button>
+            <button type="button" class="btn btn-danger" onclick="leaveRoom()">Leave Room</button>
+          </div>
+        </div>
+      </nav>
+
+      <div id="videos">
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='video.css') }}">
+
+        <form class="hidden-form">
+          <label for="username">Name: </label>
+          <input type="text" name=”username” id="username">
+          <label for="room">Room</label>
+          <input type="text" name="room" id="room">
+          <button id="join_leave">Join call</button>
+          <button id="toggle_chat" disabled>Toggle chat</button>
+
+        </form>
+
+      </div>
+
+      <div class="row">
+
+        <div id="root" class="col-sm-2">
+          <div id="container" class="container">
+            <div id="local" class="participant">
+              <div id="localme"></div>
+              <div class="label">Me</div>
+            </div>
+            <!-- more participants will be added dynamically here -->
+          </div>
+          <div id="chat">
+            <div id="chat-scroll">
+              <div id="chat-content">
+                <!-- chat content will be added dynamically here -->
+              </div>
+            </div>
+            <input id="chat-input" type="text">
+          </div>
+        </div>
+
+        <div class="col-sm-6" style="border: 3px solid;">
+          <svg id="draw" style="width: 100%;">
+          </svg>
+        </div>
+
+        <div class="col-sm-4">
+          <!-- Code content -->
+          <div class="submit-container">
+            <div id="editor-spinner" class="spinner"></div>
+            <div id="editor">
+            </div>
+          </div>
+          <div class="submit">
+            <div id="time-memo"></div>
+            <select id="language">
+              <option value="10">C++ (g++ 7.2.0)</option>
+              <option value="4">C (gcc 7.2.0)</option>
+              <option value="27">Java (OpenJDK 8)</option>
+              <option value="34">Python (3.6.0)</option>
+              <option value="36">Python (2.7.9)</option>
+            </select>
+            <button type="button" id="submit-btn" class="btn btn-primary btn-md">Submit</button>
+          </div>
+          <div class="container">
+            <div class="ide-output row">
+              <div class="tarea col-md-6 col-xs-12">
+                <p>Input</p>
+                <textarea id="stdin" rows="8"></textarea>
+              </div>
+              <div class="tarea col-md-6 col-xs-12">
+                <p>Output</p>
+                <textarea id="stdout" rows="8" readonly></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="overlay"></div>
+
+  <script src="https://media.twiliocdn.com/sdk/js/video/releases/2.3.0/twilio-video.min.js"></script>
+  <script src="https://media.twiliocdn.com/sdk/js/conversations/releases/1.0.0/twilio-conversations.min.js"></script>
+  <script src="{{ url_for('static', filename='video.js') }}"></script>
+
+  <!-- Firebase ones here -->
+  <!-- The core Firebase JS SDK is always required and must be listed first -->
+  <script src="https://www.gstatic.com/firebasejs/8.2.9/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.2.9/firebase-database.js"></script>
+
+  <script>
+    // Your web app's Firebase configuration
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+    var firebaseConfig = {
+      apiKey: "AIzaSyDuNLZFL9dNhFTn15VstyE0bdir_m6WwsE",
+      authDomain: "hack30-3d15c.firebaseapp.com",
+      databaseURL: "https://hack30-3d15c-default-rtdb.firebaseio.com",
+      projectId: "hack30-3d15c",
+      storageBucket: "hack30-3d15c.appspot.com",
+      messagingSenderId: "376940421832",
+      appId: "1:376940421832:web:39c1f7db04efeb76c03bfd",
+      measurementId: "G-32B6XBNJGB"
+    };
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+  </script>
+
+  <!-- jQuery CDN - Slim version (=without AJAX) -->
+
+  <!-- Popper.JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js"
+    integrity="sha384-cs/chFZiN24E4KMATLdqdvsezGxaGsi4hLGOzlXwp5UZB1LY//20VyM2taTB4QvJ"
+    crossorigin="anonymous"></script>
+  <!-- Bootstrap JS -->
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js"
+    integrity="sha384-uefMccjFJAIv6A+rW+L4AHf99KvxDjWSu1z9VI8SKNVmz4sk7buKt/6v9KI65qnm"
+    crossorigin="anonymous"></script>
+  <!-- jQuery Custom Scroller CDN -->
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.concat.min.js"></script>
+
+
+  <!-- Bootstrap slider from CDN-->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/10.6.2/bootstrap-slider.min.js"
+    integrity="sha256-oj52qvIP5c7N6lZZoh9z3OYacAIOjsROAcZBHUaJMyw=" crossorigin="anonymous"></script>
+  <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/10.6.2/css/bootstrap-slider.min.css"
+    integrity="sha256-G3IAYJYIQvZgPksNQDbjvxd/Ca1SfCDFwu2s2lt0oGo=" crossorigin="anonymous" />
+
+
+
+  <!-- This is the modal to get the username from the user.  -->
+  <div class="modal show" id="usernameModal" tabindex="1" role="dialog" aria-labelledby="username" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="usernameModal-title-1">Enter your name here: </h5>
+        </div>
+        <div class="modal-body">
+          <form id="username-form">
+            <input class="form-control" autocomplete="off" type="text" name="username" id="username-text">
+            <hr>
+            <button type="submit" class="btn btn-primary">Save</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- This is the modal to get the username from the user.  -->
+  <div class="modal show" id="room_id_Modal" tabindex="1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="room_id-title-1">Enter your Room ID here: </h5>
+        </div>
+        <div class="modal-body">
+          <form id="room_id-form">
+            <input class="form-control" autocomplete="off" type="text" id="room_id-text">
+            <hr>
+            <button type="submit" class="btn btn-primary" style="float:right;">Join Room</button>
+          </form>
+        </div>
+
+        <div class="modal-footer">
+          <p>Prefer to create your own room?</p>
+          <button class="btn btn-success" onclick="create_room()" data-dismiss="modal">Create Room</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="gifModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <input id="text" type="text" autocomplete="off" class="form-control" placeholder="Search for gifs"
+            aria-describedby="basic-addon1">
+          <button type="button" class="close" onclick="closeGifModal()" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div id="gifModalBody" class="modal-body" style="overflow-x: scroll; height:400px; width:480px;"
+          onscroll="scrolling();">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" onclick="sendGIF()">Send GIF</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+
+</html>

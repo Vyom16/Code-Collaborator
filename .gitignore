@@ -1,0 +1,4 @@
+env/
+.env
+wsgi.py
+__pycache__/
